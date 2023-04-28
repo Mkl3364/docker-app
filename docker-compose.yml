@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  database:
+    image: mysql:latest
+    container_name: docker-app-database
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - /Users/mickaelbrunet/development/docker-app-vol:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: advice
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: admin
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    networks:
+      - network-backend
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    container_name: docker-app-pma
+    environment:
+      PMA_HOST: database
+    ports:
+      - "8080:80"
+    depends_on:
+      - database
+    networks:
+      - network-backend
+  
+  docker-app-frontend:
+    build: .
+    container_name: docker-app-frontend
+    ports:
+      - 3002:3002
+    networks:
+      - network-backend
+    volumes:
+      - .:/app
+
+  docker-app-backend:
+    build:
+      context: ../docker-app-backend/docker-app-backend
+      dockerfile: dev.dockerfile
+    container_name: docker-app-backend
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - 3001:3001
+    env_file:
+      - ../docker-app-backend/docker-app-backend/.env
+    restart: always
+    networks:
+      - network-backend
+    volumes:
+      - .:/api
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: docker-app-grafana
+    ports:
+      - 3000:3000
+    networks:
+      - network-backend
+
+volumes:
+  docker-app-vol:
+
+networks:
+  network-backend:
+    
