@@ -1,20 +1,47 @@
 import Image from "next/image"
 import { useRouter } from "next/router"
+import { UserSessionStorage } from "./auth/register"
+import Alert from "@/components/profile/Alert"
+import { useState } from "react"
 
 export default function Home({advice}: any) {
   
   const router = useRouter()
+  const [adviceSaved, setAdviceSaved] = useState<boolean>(false)
 
   const touchReload = () => {
     router.reload()
   }
 
   const onClickBan = () => {
-
+    router.reload()
   }
 
-  const onClickLike = () => {
-
+  const onClickLike = async (adviceContent: string, adviceId: number) => {
+    if (sessionStorage.getItem('user') === null) {
+      router.push('/auth/login');
+    }
+    try {
+      const user: UserSessionStorage = sessionStorage.getItem("user") !== null ? JSON.parse(sessionStorage.getItem("user")!) : null
+      const response = await fetch("http://localhost:3001/likes", {
+        method: "POST",
+        body: JSON.stringify({
+          id: adviceId,
+          userId: user.id,
+          content: adviceContent,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      setAdviceSaved(true)
+      const result = await response.json()
+      console.log('resultat',result)
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error.message
+      }
+    }
   }
 
   return (
@@ -25,10 +52,11 @@ export default function Home({advice}: any) {
           </div>
           <div className="flex justify-center gap-4">
             <Image src="/images/svg/ban.svg" height={30} width={30} alt="ban-button" onClick={onClickBan}/>
-            <Image src="/images/svg/reload.svg" height={30} width={30} alt="reload-button" onClick={touchReload}/>
-            <Image src="/images/svg/heart.svg" height={30} width={30} alt="like-button" onClick={onClickLike} />
+            <Image src="/images/svg/reload.svg" height={30} width={30} alt="reload-button" onClick={touchReload} className="hover:cursor-pointer"/>
+            <Image src="/images/svg/heart.svg" height={30} width={30} alt="like-button" onClick={() => onClickLike(advice.slip.advice, advice.slip.id)} className="hover:cursor-pointer" />
           </div>
         </div>
+        { adviceSaved ? <Alert body="Advice saved in profile !" duration={3000} /> : null}
     </div>
   )
 }
