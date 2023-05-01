@@ -10,6 +10,7 @@
 
 body {
   background-color: #FF6D60;
+  height: 100vh
 }
 
 @media (prefers-color-scheme: dark) {

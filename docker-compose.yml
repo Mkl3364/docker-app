@@ -62,7 +62,7 @@ services:
     networks:
       - network-backend
     volumes:
-      - .:/api
+      - ../docker-app-backend/docker-app-backend:/api
 
   grafana:
     image: grafana/grafana:latest
